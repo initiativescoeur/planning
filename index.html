@@ -187,6 +187,7 @@ td.e { width: 1%; white-space: nowrap; text-align: right; }
 tr.done td.a b { text-decoration: line-through; color: var(--muted); }
 tr.done td.a p { color: var(--muted); }
 .who { display: block; margin-top: 4px; font-size: 11.5px; color: var(--muted); font-family: var(--f-data); }
+#ens-frame.fsframe { position: fixed !important; inset: 0; width: 100vw !important; height: 100vh !important; z-index: 2000; border-radius: 0; }
 .fi { display: inline-block; margin-left: 6px; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; border-radius: 999px; padding: 0 7px; vertical-align: 1px; cursor: help; border: 1px solid var(--hair); color: var(--muted); white-space: nowrap; }
 .fi-C { border-color: #1E7B4B; color: #1E7B4B; }
 .fi-P { border-color: #2563A8; color: #2563A8; }
@@ -934,6 +935,18 @@ a.btn{text-decoration:none;display:inline-block}
   function pickP(e) { const g = e.target.closest('.node'); if (!g) return; renderPDetail(NI[g.dataset.n]); }
   psc.addEventListener('click', pickP);
   psc.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickP(e); } });
+
+  /* Plein écran demandé par la vue d’ensemble : le cadre occupe toute la fenêtre, et tout l’écran si le navigateur l’autorise. */
+  (function () {
+    const f = document.getElementById('ens-frame'); if (!f) return;
+    function setFs(v) {
+      f.classList.toggle('fsframe', v); document.documentElement.style.overflow = v ? 'hidden' : '';
+      if (v) { try { const p = f.requestFullscreen && f.requestFullscreen(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
+      else if (document.fullscreenElement) { try { document.exitFullscreen(); } catch (e) { } }
+    }
+    window.addEventListener('message', e => { if (e.source !== f.contentWindow || !e.data || e.data.ic27 !== 'fs') return; setFs(!!e.data.on); });
+    document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && f.classList.contains('fsframe')) { setFs(false); try { f.contentWindow.postMessage({ ic27: 'fs-exit' }, '*'); } catch (e) { } } });
+  })();
 
   /* ---------- bulle « source et fiabilité » ---------- */
   const srcTip = document.createElement('div'); srcTip.id = 'srctip'; srcTip.hidden = true; srcTip.setAttribute('role', 'tooltip'); document.body.appendChild(srcTip);
