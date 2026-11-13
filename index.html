@@ -339,11 +339,11 @@ a.btn{text-decoration:none;display:inline-block}
 
   <div class="bar">
     <nav class="tabs" aria-label="Vues">
+      <a href="#ensemble" data-v="ensemble">Vue d’ensemble</a>
       <a href="#planning" data-v="planning">Planning</a>
       <a href="#pert" data-v="pert">PERT</a>
       <a href="#liste" data-v="liste">Liste<span class="xl"> et modifications</span></a>
       <a href="#journal" data-v="journal">Journal</a>
-      <a href="#ensemble" data-v="ensemble">Vue d’ensemble</a>
       <a href="#comptes" data-v="comptes" id="tab-comptes" hidden>Comptes</a>
     </nav>
     <div class="chips" id="chips" role="group" aria-label="Dossiers affichés"></div>
@@ -1264,8 +1264,8 @@ a.btn{text-decoration:none;display:inline-block}
   /* ---------- vues ---------- */
   const VIEWS = ['planning', 'pert', 'liste', 'journal', 'ensemble', 'comptes', 'compte'];
   function setView() {
-    let v = (location.hash || '#planning').slice(1);
-    if (!VIEWS.includes(v) || (v === 'comptes' && !isAdmin())) v = 'planning';
+    let v = (location.hash || '#ensemble').slice(1);
+    if (!VIEWS.includes(v) || (v === 'comptes' && !isAdmin())) v = 'ensemble';
     state.view = v;
     document.querySelectorAll('.tabs a').forEach(a => { if (a.dataset.v === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     VIEWS.forEach(k => { $('#v-' + k).hidden = k !== v; });
