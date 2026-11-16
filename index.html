@@ -12,7 +12,7 @@
 
 /* Mise en page : une table de navigation — en-tête, échéances proches, puis trois vues (Gantt, PERT, liste) sur une même échelle de temps. */
 :root {
-  --page: #f2f5f6; --surface: #fbfcfc; --ink: #0d1a21; --ink-2: #44535b; --muted: #6f7e86;
+  --page: #f2f5f6; --heart: #6f838c; --surface: #fbfcfc; --ink: #0d1a21; --ink-2: #44535b; --muted: #6f7e86;
   --hair: #dbe2e5; --base: #b7c3c8; --accent: #0b5d8a; --band: rgba(13, 26, 33, .05); --shadow: 0 6px 24px rgba(13, 26, 33, .12);
   --s0: #7a888f; --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
   --on0: #fff; --on1: #fff; --on2: #fff; --on3: #fff; --on4: #0b0b0b; --on5: #fff; --on6: #fff; --on7: #fff; --on8: #fff;
@@ -22,14 +22,14 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --page: #0a1015; --surface: #121a20; --ink: #e8eef1; --ink-2: #b3c0c6; --muted: #84939a;
+    --page: #0a1015; --heart: #a9b8bf; --surface: #121a20; --ink: #e8eef1; --ink-2: #b3c0c6; --muted: #84939a;
     --hair: #22303a; --base: #34444f; --accent: #6db4de; --band: rgba(232, 238, 241, .055); --shadow: 0 8px 28px rgba(0, 0, 0, .5);
     --s0: #8a979d; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
     --on4: #fff; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --page: #0a1015; --surface: #121a20; --ink: #e8eef1; --ink-2: #b3c0c6; --muted: #84939a;
+  --page: #0a1015; --heart: #a9b8bf; --surface: #121a20; --ink: #e8eef1; --ink-2: #b3c0c6; --muted: #84939a;
   --hair: #22303a; --base: #34444f; --accent: #6db4de; --band: rgba(232, 238, 241, .055); --shadow: 0 8px 28px rgba(0, 0, 0, .5);
   --s0: #8a979d; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
   --on4: #fff; color-scheme: dark;
@@ -61,6 +61,35 @@ h2 { font-family: var(--f-display); font-stretch: 112%; font-weight: 750; font-s
 /* onglets & filtres */
 .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--page); padding-block: 8px; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--page); }
+/* Modif Ulysse (14/11/2026) : fond à petits cœurs (dessiné par le script en bas de page), calé sur la fenêtre pour que la barre collante se fonde dans le fond. */
+body, .bar, body::before { background-color: var(--page); background-image: var(--hearts, none); background-size: 320px 320px; background-attachment: fixed; }
+/* Modif Ulysse (16/11/2026) : champ de recherche. Résultats groupés par dossier ; au bout de chaque ligne, les vues où l'action apparaît (planning, PERT, liste), cliquables. */
+.search { position: relative; flex: 1 1 220px; max-width: 340px; min-width: 0; }
+.search input { font: inherit; font-size: 14px; width: 100%; color: var(--ink); background: var(--surface); border: 1px solid var(--base); border-radius: 999px; padding: 7px 14px 7px 34px; }
+.search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.search .qi { position: absolute; left: 13px; top: 50%; width: 13px; height: 13px; margin-top: -7px; border: 2px solid var(--muted); border-radius: 50%; pointer-events: none; }
+.search .qi::after { content: ""; position: absolute; width: 2px; height: 6px; background: var(--muted); right: -4px; bottom: -5px; transform: rotate(-45deg); border-radius: 1px; }
+.qres { position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; width: min(620px, calc(100vw - 32px)); max-height: min(70vh, 560px); overflow: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; box-shadow: var(--shadow); padding: 4px 0 6px; }
+.qres .qg { position: sticky; top: -4px; z-index: 1; display: flex; align-items: center; gap: 8px; padding: 10px 14px 6px; background: var(--surface); border-top: 1px solid var(--hair); font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink); }
+.qres .qg:first-child { border-top: 0; }
+.qres .qg .sw { width: 12px; height: 12px; }
+.qres .qg small { margin-left: auto; font-family: var(--f-data); font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.qres .qr { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 6px 14px 6px 34px; border-left: 3px solid var(--qc, transparent); margin-left: 14px; }
+.qres .qr:hover, .qres .qr.on { background: var(--band); }
+.qres .qr .qd { font-family: var(--f-data); font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.qres .qr .qt { min-width: 0; font-size: 14px; color: var(--ink); }
+.qres .qr .qt small { display: block; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qres .qr.done .qt { color: var(--muted); }
+.qres mark { background: color-mix(in srgb, var(--accent) 22%, transparent); color: inherit; border-radius: 2px; padding: 0 1px; }
+.qres .qv { display: flex; gap: 4px; }
+.qres .qv button { font: inherit; font-family: var(--f-data); font-size: 11px; line-height: 1; color: var(--ink-2); background: var(--page); border: 1px solid var(--hair); border-radius: 999px; padding: 4px 7px; cursor: pointer; }
+.qres .qv button:hover, .qres .qv button:focus-visible { color: var(--surface); background: var(--ink); border-color: var(--ink); outline: none; }
+.qres .qempty { padding: 12px 14px; color: var(--muted); font-size: 13.5px; }
+.qres .qmore { padding: 8px 14px 2px; color: var(--muted); font-size: 12.5px; }
+@keyframes qflash { 0%, 40% { background: color-mix(in srgb, var(--accent) 26%, transparent); } 100% { background: transparent; } }
+.qflash, .qflash > td { animation: qflash 2.4s ease-out; }
+@media (max-width: 640px) { .search { max-width: none; flex-basis: 100%; } .qres .qr { grid-template-columns: minmax(0, 1fr); padding-left: 16px; } .qres .qr .qv { justify-content: flex-start; } }
+@media (prefers-reduced-motion: reduce) { .qflash, .qflash > td { animation: none; } }
 .tabs { display: inline-flex; background: var(--surface); border: 1px solid var(--hair); border-radius: 999px; padding: 3px; gap: 2px; }
 .tabs a { text-decoration: none; color: var(--ink-2); font-weight: 600; font-size: 14px; padding: 7px 15px; border-radius: 999px; }
 .tabs a[aria-current="page"] { background: var(--ink); color: var(--surface); }
@@ -346,6 +375,11 @@ a.btn{text-decoration:none;display:inline-block}
       <a href="#journal" data-v="journal">Journal</a>
       <a href="#comptes" data-v="comptes" id="tab-comptes" hidden>Comptes</a>
     </nav>
+    <div class="search" id="search">
+      <i class="qi" aria-hidden="true"></i>
+      <input type="search" id="q" placeholder="Rechercher une action, un dossier…" autocomplete="off" aria-label="Rechercher dans le planning" aria-controls="q-res">
+      <div class="qres" id="q-res" hidden></div>
+    </div>
     <div class="chips" id="chips" role="group" aria-label="Dossiers affichés"></div>
   </div>
 
@@ -705,17 +739,33 @@ a.btn{text-decoration:none;display:inline-block}
   }
 
   /* ---------- filtres ---------- */
+  /* Modif Ulysse (14/11/2026) : double-clic sur un dossier = n'afficher que lui ; re-double-clic = tout réafficher.
+     Les boutons ne sont plus reconstruits à chaque clic (seul leur état change), pour que le navigateur reconnaisse le double-clic. */
   function renderChips() {
-    const all = state.on.size === G.length;
-    $('#chips').innerHTML = G.map(g => `<button type="button" class="chip" data-k="${g.k}" aria-pressed="${state.on.has(g.k)}">${sw(g.k)}${esc(g.s)}</button>`).join('') +
-      (all ? '' : `<button type="button" class="chip all" data-k="*" aria-pressed="false">Tout afficher</button>`);
+    const box = $('#chips'), all = state.on.size === G.length, keys = G.map(g => g.k).join('|');
+    if (box.dataset.keys !== keys) {
+      box.dataset.keys = keys;
+      box.innerHTML = G.map(g => `<button type="button" class="chip" data-k="${g.k}" aria-pressed="false" title="Double-clic : n’afficher que ce dossier (re-double-clic : tout réafficher)">${sw(g.k)}${esc(g.s)}</button>`).join('') +
+        `<button type="button" class="chip all" data-k="*" aria-pressed="false">Tout afficher</button>`;
+    }
+    box.querySelectorAll('.chip').forEach(b => { if (b.dataset.k === '*') b.hidden = all; else b.setAttribute('aria-pressed', state.on.has(b.dataset.k)); });
   }
+  let chipsBefore = null; /* état des filtres avant le 1er clic, pour annuler ce clic si c'était un double-clic */
   $('#chips').addEventListener('click', e => {
     const b = e.target.closest('.chip'); if (!b) return;
     const k = b.dataset.k;
+    if (e.detail > 2) return;
     if (k === '*') state.on = new Set(G.map(g => g.k));
+    else if (e.detail === 2 && chipsBefore) {
+      const solo = chipsBefore.size === 1 && chipsBefore.has(k);
+      state.on = solo ? new Set(G.map(g => g.k)) : new Set([k]);
+      chipsBefore = null;
+    }
     else if (e.altKey || e.metaKey) state.on = new Set([k]);
-    else if (state.on.has(k)) { if (state.on.size > 1) state.on.delete(k); } else state.on.add(k);
+    else {
+      chipsBefore = new Set(state.on);
+      if (state.on.has(k)) { if (state.on.size > 1) state.on.delete(k); } else state.on.add(k);
+    }
     try { localStorage.setItem('ic27-filtres', JSON.stringify([...state.on])); } catch (err) { }
     renderChips(); renderHead(); renderView();
   });
@@ -944,7 +994,17 @@ a.btn{text-decoration:none;display:inline-block}
       if (v) { try { const p = f.requestFullscreen && f.requestFullscreen(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
       else if (document.fullscreenElement) { try { document.exitFullscreen(); } catch (e) { } }
     }
-    window.addEventListener('message', e => { if (e.source !== f.contentWindow || !e.data || e.data.ic27 !== 'fs') return; setFs(!!e.data.on); });
+    /* La vue d’ensemble donne sa hauteur : le cadre s’agrandit d’autant et la page défile d’un seul tenant, sans ascenseur intérieur. */
+    function barH() { const b = document.querySelector('.bar'); if (!b) return 0; const p = getComputedStyle(b).position; return (p === 'sticky' || p === 'fixed') ? b.getBoundingClientRect().height : 0; }
+    let vpq = 0;
+    function vp() { if (vpq) return; vpq = requestAnimationFrame(() => { vpq = 0; if (f.hidden || !f.contentWindow) return; const r = f.getBoundingClientRect(), fs = f.classList.contains('fsframe'); try { f.contentWindow.postMessage(fs ? { ic27: 'vp', top: 0, bottom: window.innerHeight } : { ic27: 'vp', top: barH() - r.top, bottom: window.innerHeight - r.top }, '*'); } catch (e) { } }); }
+    window.addEventListener('scroll', vp, { passive: true }); window.addEventListener('resize', vp);
+    window.addEventListener('message', e => {
+      if (e.source !== f.contentWindow || !e.data) return;
+      if (e.data.ic27 === 'fs') setFs(!!e.data.on);
+      else if (e.data.ic27 === 'h' && e.data.h > 0) { f.style.height = Math.max(300, Math.ceil(e.data.h)) + 'px'; vp(); }
+      else if (e.data.ic27 === 'goto') { const r = f.getBoundingClientRect(); window.scrollTo({ top: Math.max(0, window.scrollY + r.top + e.data.y - barH() - 12), behavior: 'smooth' }); }
+    });
     document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && f.classList.contains('fsframe')) { setFs(false); try { f.contentWindow.postMessage({ ic27: 'fs-exit' }, '*'); } catch (e) { } } });
   })();
 
@@ -1289,9 +1349,123 @@ a.btn{text-decoration:none;display:inline-block}
   let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (ME && state.view === 'planning') renderGantt(); }, 150); });
   addEventListener('scroll', hideTip, { passive: true });
 
+  /* ---------- recherche (Modif Ulysse, 16/11/2026) ----------
+     Cherche dans les actions (titre, détail, dossier) et les étapes du PERT, sans tenir compte des accents.
+     Résultats groupés par dossier ; au bout de chaque ligne, les vues où l'élément apparaît, cliquables. */
+  (function () {
+    const qi = $('#q'), qr = $('#q-res'); if (!qi || !qr) return;
+    const fold = s => Array.from(String(s || '')).map(c => { const n = c.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); return n.length === 1 ? n : c.toLowerCase(); }).join('');
+    const hl = (txt, words) => {
+      const s = String(txt || ''), f = fold(s), marks = new Array(s.length).fill(false);
+      words.forEach(w => { let i = f.indexOf(w); while (i >= 0 && w) { for (let k = i; k < i + w.length; k++) marks[k] = true; i = f.indexOf(w, i + w.length); } });
+      let out = '', open = false;
+      Array.from(s).forEach((c, i) => { if (marks[i] && !open) { out += '<mark>'; open = true; } if (!marks[i] && open) { out += '</mark>'; open = false; } out += esc(c); });
+      return out + (open ? '</mark>' : '');
+    };
+    const snip = (txt, words) => {
+      const s = String(txt || ''), f = fold(s); let i = -1;
+      for (const w of words) { const j = f.indexOf(w); if (j >= 0 && (i < 0 || j < i)) i = j; }
+      if (i < 0) return '';
+      const a = Math.max(0, i - 40);
+      return (a ? '…' : '') + hl(s.slice(a, a + 140), words);
+    };
+    let hits = [];
+    function search(q) {
+      const words = fold(q).split(/\s+/).filter(Boolean);
+      if (!words.length) return [];
+      const pertOf = {}; NODES.forEach(n => { if (n.t) pertOf[n.t] = n.id; });
+      const out = [];
+      TASKS.forEach(t => {
+        const x = cleanX(t.x), gi = GI[t.g] || { n: t.g, s: t.g };
+        const hay = fold(t.t + ' ' + x + ' ' + gi.n + ' ' + gi.s);
+        if (words.every(w => hay.includes(w))) out.push({ kind: 't', id: t.id, g: t.g, d: t.d, title: t.t, x, done: t.done, ev: t.k === 'e', node: pertOf[t.id] || null, words });
+      });
+      NODES.forEach(n => {
+        if (n.t && BYID[n.t]) return;
+        const gi = GI[n.g] || { n: n.g, s: n.g };
+        if (words.every(w => fold(n.l + ' ' + gi.n + ' ' + gi.s).includes(w))) out.push({ kind: 'n', id: n.id, g: n.g, d: n.d || '', title: n.l, x: '', done: false, node: n.id, words });
+      });
+      return out;
+    }
+    function render() {
+      const q = qi.value.trim();
+      if (!q) { qr.hidden = true; qr.innerHTML = ''; hits = []; return; }
+      hits = search(q);
+      if (!hits.length) { qr.innerHTML = `<p class="qempty">Rien ne correspond à « ${esc(q)} ».</p>`; qr.hidden = false; return; }
+      const by = {}; hits.forEach(h => (by[h.g] = by[h.g] || []).push(h));
+      const order = Object.keys(by).sort((a, b) => gidx(a) - gidx(b));
+      let html = '', shown = 0; const MAX = 60;
+      order.forEach(g => {
+        const list = by[g].sort((a, b) => a.d.localeCompare(b.d));
+        html += `<div class="qg">${sw(g)}${esc((GI[g] || { n: g }).n)}<small>${list.length} résultat${list.length > 1 ? 's' : ''}</small></div>`;
+        list.forEach(h => {
+          if (shown >= MAX) return; shown++;
+          const views = h.kind === 't'
+            ? `<button type="button" data-go="planning">planning</button>${h.node ? '<button type="button" data-go="pert">PERT</button>' : ''}<button type="button" data-go="liste">liste</button>`
+            : '<button type="button" data-go="pert">PERT</button>';
+          html += `<div class="qr${h.done ? ' done' : ''}" style="--qc:${col(h.g)}" data-i="${hits.indexOf(h)}"><span class="qd">${h.d ? fd(h.d) : ''}</span><span class="qt">${h.done ? '✓ ' : ''}${hl(h.title, h.words)}${h.ev ? ' <span class="rdv">rendez-vous</span>' : ''}${h.x ? `<small>${snip(h.x, h.words)}</small>` : ''}</span><span class="qv">${views}</span></div>`;
+        });
+      });
+      if (shown < hits.length) html += `<p class="qmore">${hits.length - shown} autres résultats : précisez la recherche.</p>`;
+      qr.innerHTML = html; qr.hidden = false;
+    }
+    function ensureOn(g) { if (!state.on.has(g)) { state.on.add(g); try { localStorage.setItem('ic27-filtres', JSON.stringify([...state.on])); } catch (e) { } renderChips(); renderHead(); } }
+    function whenReady(test, done) { let n = 0; const tick = () => { const r = test(); if (r) done(r); else if (++n < 40) setTimeout(tick, 50); }; tick(); }
+    function go(h, view) {
+      qr.hidden = true;
+      ensureOn(h.g);
+      if (view === 'liste' && state.hideDone && h.done) state.hideDone = false;
+      if (view === 'planning' && state.preset !== 'tout') { const t = BYID[h.id]; if (t) { const [a, b] = state.preset === '8sem' ? [addD(TODAY, -3), addD(TODAY, 59)] : PRESETS[state.preset]; if (t.d < a || t.d > b) state.preset = 'tout'; } }
+      if (location.hash !== '#' + view) location.hash = '#' + view; else renderView();
+      if (view === 'liste') whenReady(() => document.querySelector(`#tbl tr[data-id="${CSS.escape(h.id)}"]`), tr => { tr.scrollIntoView({ block: 'center', behavior: 'smooth' }); tr.classList.remove('qflash'); void tr.offsetWidth; tr.classList.add('qflash'); });
+      if (view === 'pert') whenReady(() => NI[h.node] && document.querySelector(`#p-scroll .node[data-n="${CSS.escape(h.node)}"]`), g => { renderPDetail(NI[h.node]); focusNode(h.node); g.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); $('#p-detail').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); setTimeout(() => focusNode(null), 2400); });
+      if (view === 'planning') whenReady(() => state.view === 'planning' && clusters.find(c => c.items.some(i => i.id === h.id)), c => { renderGDetail(c); const el = document.querySelector(`#g-scroll .cl[data-c="${c.id}"]`); if (el) el.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); $('#g-detail').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });
+    }
+    let rt; qi.addEventListener('input', () => { clearTimeout(rt); rt = setTimeout(render, 120); });
+    qi.addEventListener('focus', () => { if (qi.value.trim()) render(); });
+    qi.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { qi.value = ''; render(); qi.blur(); }
+      if (e.key === 'Enter' && hits.length) { e.preventDefault(); const r = qr.querySelector('.qr'); const h = r ? hits[+r.dataset.i] : hits[0]; go(h, h.kind === 't' ? 'liste' : 'pert'); }
+    });
+    qr.addEventListener('click', e => {
+      const b = e.target.closest('button[data-go]'), row = e.target.closest('.qr'); if (!row) return;
+      const h = hits[+row.dataset.i]; if (!h) return;
+      go(h, b ? b.dataset.go : (h.kind === 't' ? 'liste' : 'pert'));
+    });
+    document.addEventListener('pointerdown', e => { if (!e.target.closest('#search')) qr.hidden = true; });
+  })();
+
   boot();
 })();
 
+</script>
+
+<script>
+/* Modif Ulysse (14/11/2026) : fond à petits cœurs. Taille, position, rotation (±30°) et opacité tirées au hasard, tirage fixe pour que le motif ne change pas d'une visite à l'autre. */
+(function () {
+  const T = 320, P = 'M12 21s-7.5-4.6-10-9.3C.4 8.6 2.2 4.5 6 4.5c2.3 0 3.7 1.3 6 3.8 2.3-2.5 3.7-3.8 6-3.8 3.8 0 5.6 4.1 4 7.2C19.5 16.4 12 21 12 21z';
+  let seed = 2027; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const H = [];
+  for (let n = 0; n < 600 && H.length < 20; n++) {
+    const h = { x: rnd() * T, y: rnd() * T, k: .5 + rnd() * .85, a: (rnd() * 2 - 1) * 30, o: .06 + rnd() * .12 };
+    const ok = H.every(q => { let dx = Math.abs(q.x - h.x), dy = Math.abs(q.y - h.y); dx = Math.min(dx, T - dx); dy = Math.min(dy, T - dy); return Math.hypot(dx, dy) > 14 * (q.k + h.k) + 10; });
+    if (ok) H.push(h);
+  }
+  function paint() {
+    const c = getComputedStyle(document.documentElement).getPropertyValue('--heart').trim() || '#6f838c';
+    let g = '';
+    for (const h of H) for (const dx of [-T, 0, T]) for (const dy of [-T, 0, T]) {
+      const x = h.x + dx, y = h.y + dy, m = 20 * h.k;
+      if (x < -m || x > T + m || y < -m || y > T + m) continue;
+      g += `<path d="${P}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${h.a.toFixed(1)}) scale(${h.k.toFixed(2)}) translate(-12 -12.5)" fill-opacity="${h.o.toFixed(3)}"/>`;
+    }
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${T}" height="${T}" fill="${c}">${g}</svg>`;
+    document.documentElement.style.setProperty('--hearts', `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+  }
+  paint();
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paint); } catch (e) { }
+  new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+})();
 </script>
 </body>
 </html>
