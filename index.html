@@ -347,9 +347,12 @@ a.btn{text-decoration:none;display:inline-block}
 .ubtn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .ubtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (max-width:720px){.uacts{justify-content:flex-start}}
+/* Copie de consultation dans Claude (window.__SNAP) : ni compte ni état de synchronisation, un bandeau à la place. */
+.snap #user a, .snap #user button, .snap #status { display: none; }
 </style>
 </head>
 <body>
+<div id="snapbar" hidden style="background:#0E1A33;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:10px 16px;text-align:center"><span id="snapmsg">Copie de consultation du planning en ligne.</span> <button type="button" id="snapbtn" style="font:inherit;margin:0 8px;padding:3px 12px;border-radius:999px;border:1px solid #9FC2FF;background:transparent;color:#fff;cursor:pointer">Actualiser</button> Pour modifier : <a href="https://initiativescoeur.github.io/planning/" target="_blank" rel="noopener" style="color:#9FC2FF">planning en ligne</a>.</div>
 
 <div class="auth" id="auth" hidden>
   <div class="card">
@@ -487,6 +490,9 @@ a.btn{text-decoration:none;display:inline-block}
 <script>
 /* Planning partagé Initiatives-Cœur — interface. Les données viennent de api.php, après connexion. */
 'use strict';
+/* Copie de consultation dans Claude : les données arrivent dans window.__SNAP (actions, référentiel, vue d’ensemble, date de la copie,
+   identifiant de la base), puis la page relit la base par le connecteur Google Sheets de la personne qui regarde. En ligne, rien de tout ça ne s’active. */
+if (window.__SNAP) { document.documentElement.classList.add('snap'); const sb = document.getElementById('snapbar'); if (sb) sb.hidden = false; const sm = document.getElementById('snapmsg'); if (sm) sm.textContent = 'Copie du planning en ligne du ' + (window.__SNAP.at || '') + '.'; }
 (() => {
   const $ = s => document.querySelector(s);
   const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
@@ -540,7 +546,64 @@ a.btn{text-decoration:none;display:inline-block}
 
   /* ---------- serveur ---------- */
   const EXEC = 'https://script.google.com/macros/s/AKfycbx1u_mZZ4ZEyao2qzC0MsD0I-P4gYujkG44f8V9HiSWSBMi3ekWyCqZppmCoXO-Jo54cQ/exec';
+  /* Copie de consultation : relit les actions (onglet « tasks ») et la vue d’ensemble (onglet « vue ») par le connecteur Google Sheets. */
+  async function snapRefresh() {
+    const S = window.__SNAP, msg = document.getElementById('snapmsg'), btn = document.getElementById('snapbtn');
+    const say = t => { if (msg) msg.textContent = t; };
+    const cp = 'Copie du ' + (S.at || 'planning en ligne');
+    const read = async range => {
+      const r = await mcp.callTool('Google Sheets', 'get_values', { spreadsheetId: S.sheet, range });
+      let p = r && r.payload; if (typeof p === 'string') { try { p = JSON.parse(p); } catch (e) { p = null; } }
+      return p && (p.values || (p.content && p.content.values));
+    };
+    let mcp = null;
+    if (btn) btn.disabled = true; say('Lecture du planning en ligne…');
+    try {
+      mcp = window.claude && window.claude.use ? await window.claude.use('mcp') : null;
+      if (!mcp || !S.sheet) throw { code: 'absent' };
+      const vals = await read('tasks!A1:M3000');
+      if (!Array.isArray(vals) || vals.length < 2 || String(vals[0][0]) !== 'id') throw { code: 'format' };
+      const out = [];
+      for (const row of vals.slice(1)) {
+        if (!row || !row[0] || !row[3]) continue;
+        if (String(row[9] || '0') === '1') continue;
+        out.push({ id: String(row[0]), g: String(row[1] || 'tr'), k: String(row[2] || 'd'), d: String(row[3]), t: String(row[4] || ''), x: String(row[5] || ''), r: row[6] ? String(row[6]) : null, o: +row[7] || 9999, done: String(row[8] || '0') === '1', v: +row[10] || 1, by: null, at: row[12] ? String(row[12]) : null });
+      }
+      S.tasks = out;
+      let ov = false;
+      try {
+        const rows = await read('vue!A1:A5000');
+        if (Array.isArray(rows) && rows.length) {
+          let html = '';
+          rows.forEach((row, i) => { const c = String((row && row[0]) || ''); html += c.charAt(0) === '+' ? c.slice(1) : (i ? '\n' : '') + c.slice(1); });
+          if (html.indexOf('<title>') >= 0) { ov = true; if (html !== S.overview) { S.overview = html; overviewLoaded = false; if (state.view === 'ensemble') loadOverview(); } }
+        }
+      } catch (e) { }
+      await load();
+      const d = new Date(); say('Reflet du planning en ligne, lu à ' + d.getHours() + ' h ' + String(d.getMinutes()).padStart(2, '0') + ' (' + out.length + ' actions' + (ov ? ', vue d’ensemble comprise' : '') + ').');
+    } catch (e) {
+      const c = e && e.code;
+      say(c === 'absent' ? cp + ' : l’actualisation n’est possible que dans Claude.'
+        : c === 'server_not_connected' ? cp + ' : le connecteur Google Sheets n’est pas relié à ce compte Claude.'
+        : c === 'needs_reauth' ? cp + ' : reconnectez Google Sheets dans Claude, puis actualisez.'
+        : c === 'approval_required' || c === 'not_granted' ? cp + ' : autorisez la lecture Google Sheets pour actualiser.'
+        : c === 'format' ? cp + ' : la base du planning n’a pas pu être lue.'
+        : cp + ' : actualisation impossible pour l’instant, réessayez.');
+    }
+    if (btn) btn.disabled = false;
+  }
+  { const b = document.getElementById('snapbtn'); if (b) b.addEventListener('click', snapRefresh); }
   async function api(a, body, query) {
+    if (window.__SNAP) {
+      const S = window.__SNAP, me = { id: 0, name: 'Copie de consultation', login: '', role: 'lecteur', must_change: false };
+      if (a === 'state') return { ok: true, app: 'Planning Initiatives-Cœur 2027', me };
+      if (a === 'bootstrap') return { ok: true, me, app: 'Planning Initiatives-Cœur 2027', url: '', sheetUrl: null, groups: S.ref.groups, periods: S.ref.periods, bands: S.ref.bands, pert: S.ref.pert, poll: 86400 };
+      if (a === 'tasks') return { ok: true, tasks: JSON.parse(JSON.stringify(S.tasks)), names: {}, rev: 1 };
+      if (a === 'rev') return { ok: true, rev: 1 };
+      if (a === 'log') return { ok: true, log: [], deleted: [] };
+      if (a === 'overview') return { ok: true, html: S.overview };
+      throw { status: 403, error: 'Cette page est une copie de consultation : les modifications se font sur le planning en ligne.' };
+    }
     let r;
     try {
       const res = await fetch(window.__EXEC || EXEC, { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ a, body: body === undefined ? null : body, query: query || null, token: TOKEN }) });
@@ -648,6 +711,7 @@ a.btn{text-decoration:none;display:inline-block}
       try { const s = JSON.parse(localStorage.getItem('ic27-filtres') || 'null'); if (Array.isArray(s) && s.length) { const ok = s.filter(k => GI[k]); if (ok.length) state.on = new Set(ok); } } catch (e) { }
     }
     show('app');
+    if (window.__SNAP) setTimeout(snapRefresh, 1200);
     renderUser();
     $('#tab-comptes').hidden = !isAdmin();
     $('#j-kind-wrap').hidden = !isAdmin();
