@@ -12,7 +12,7 @@
 
 /* Mise en page : une table de navigation — en-tête, échéances proches, puis trois vues (Gantt, PERT, liste) sur une même échelle de temps. */
 :root {
-  --page: #f2f5f6; --heart: #6f838c; --surface: #fbfcfc; --ink: #0d1a21; --ink-2: #44535b; --muted: #6f7e86;
+  --page: #f2f5f6; --heart: #6f838c; --heart-rose: #e8789a; --surface: #fbfcfc; --ink: #0d1a21; --ink-2: #44535b; --muted: #6f7e86;
   --hair: #dbe2e5; --base: #b7c3c8; --accent: #0b5d8a; --band: rgba(13, 26, 33, .05); --shadow: 0 6px 24px rgba(13, 26, 33, .12);
   --s0: #7a888f; --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
   --on0: #fff; --on1: #fff; --on2: #fff; --on3: #fff; --on4: #0b0b0b; --on5: #fff; --on6: #fff; --on7: #fff; --on8: #fff;
@@ -22,14 +22,14 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --page: #0a1015; --heart: #a9b8bf; --surface: #121a20; --ink: #e8eef1; --ink-2: #b3c0c6; --muted: #84939a;
+    --page: #0a1015; --heart: #a9b8bf; --heart-rose: #d86a8c; --surface: #121a20; --ink: #e8eef1; --ink-2: #b3c0c6; --muted: #84939a;
     --hair: #22303a; --base: #34444f; --accent: #6db4de; --band: rgba(232, 238, 241, .055); --shadow: 0 8px 28px rgba(0, 0, 0, .5);
     --s0: #8a979d; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
     --on4: #fff; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --page: #0a1015; --heart: #a9b8bf; --surface: #121a20; --ink: #e8eef1; --ink-2: #b3c0c6; --muted: #84939a;
+  --page: #0a1015; --heart: #a9b8bf; --heart-rose: #d86a8c; --surface: #121a20; --ink: #e8eef1; --ink-2: #b3c0c6; --muted: #84939a;
   --hair: #22303a; --base: #34444f; --accent: #6db4de; --band: rgba(232, 238, 241, .055); --shadow: 0 8px 28px rgba(0, 0, 0, .5);
   --s0: #8a979d; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
   --on4: #fff; color-scheme: dark;
@@ -1505,7 +1505,8 @@ if (window.__SNAP) { document.documentElement.classList.add('snap'); const sb = 
 </script>
 
 <script>
-/* Modif Ulysse (14/11/2026) : fond à petits cœurs. Taille, position, rotation (±30°) et opacité tirées au hasard, tirage fixe pour que le motif ne change pas d'une visite à l'autre. */
+/* Modif Ulysse (14/11/2026) : fond à petits cœurs. Taille, position, rotation (±30°) et opacité tirées au hasard, tirage fixe pour que le motif ne change pas d'une visite à l'autre.
+   16/11/2026 : un cœur sur quatre en rose très pâle (couleur --heart-rose). */
 (function () {
   const T = 320, P = 'M12 21s-7.5-4.6-10-9.3C.4 8.6 2.2 4.5 6 4.5c2.3 0 3.7 1.3 6 3.8 2.3-2.5 3.7-3.8 6-3.8 3.8 0 5.6 4.1 4 7.2C19.5 16.4 12 21 12 21z';
   let seed = 2027; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -1516,13 +1517,17 @@ if (window.__SNAP) { document.documentElement.classList.add('snap'); const sb = 
     if (ok) H.push(h);
   }
   function paint() {
-    const c = getComputedStyle(document.documentElement).getPropertyValue('--heart').trim() || '#6f838c';
+    const cs = getComputedStyle(document.documentElement);
+    const c = cs.getPropertyValue('--heart').trim() || '#6f838c', rose = cs.getPropertyValue('--heart-rose').trim() || '#e8789a';
     let g = '';
-    for (const h of H) for (const dx of [-T, 0, T]) for (const dy of [-T, 0, T]) {
-      const x = h.x + dx, y = h.y + dy, m = 20 * h.k;
-      if (x < -m || x > T + m || y < -m || y > T + m) continue;
-      g += `<path d="${P}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${h.a.toFixed(1)}) scale(${h.k.toFixed(2)}) translate(-12 -12.5)" fill-opacity="${h.o.toFixed(3)}"/>`;
-    }
+    H.forEach((h, i) => {
+      const pk = i % 4 === 1, o = pk ? Math.min(.3, h.o * 1.6) : h.o;
+      for (const dx of [-T, 0, T]) for (const dy of [-T, 0, T]) {
+        const x = h.x + dx, y = h.y + dy, m = 20 * h.k;
+        if (x < -m || x > T + m || y < -m || y > T + m) continue;
+        g += `<path d="${P}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${h.a.toFixed(1)}) scale(${h.k.toFixed(2)}) translate(-12 -12.5)" fill-opacity="${o.toFixed(3)}"${pk ? ` fill="${rose}"` : ''}/>`;
+      }
+    });
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${T}" height="${T}" fill="${c}">${g}</svg>`;
     document.documentElement.style.setProperty('--hearts', `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
   }
