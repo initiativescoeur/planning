@@ -37,6 +37,8 @@
 * { box-sizing: border-box; }
 body { background: var(--page); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
 .wrap { max-width: 1320px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+/* Écrans larges (34 pouces ultra-larges compris) : la page suit la largeur de la fenêtre, jusqu’à 3 200 px. */
+@media (min-width: 1500px) { .wrap { max-width: min(calc(100vw - 48px), 3200px); } }
 a { color: var(--accent); }
 header { display: grid; gap: 8px; }
 .eyebrow { font-family: var(--f-data); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
