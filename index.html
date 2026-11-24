@@ -125,9 +125,9 @@ svg text { fill: var(--ink-2); }
 .ax-w { font-size: 10px; fill: var(--muted); font-family: var(--f-data); }
 .band-l { font-size: 10px; fill: var(--muted); font-weight: 600; letter-spacing: .03em; }
 .today-l { font-size: 10.5px; font-weight: 700; fill: #fff; }
-/* Date du jour : trait vertical rouge (Gantt et PERT). */
-.today-x { stroke: var(--crit, #d03b3b); stroke-width: 2; }
-.today-b { fill: var(--crit, #d03b3b); }
+/* Date du jour : trait vertical vert (Gantt et PERT) ; le rouge est réservé aux jours fériés et aux retards. */
+.today-x { stroke: #12873d; stroke-width: 2; }
+.today-b { fill: #12873d; }
 .bar-l { font-size: 10.5px; font-weight: 650; pointer-events: none; }
 .cnt { font-size: 10px; font-weight: 700; pointer-events: none; font-family: var(--f-data); }
 .hit { cursor: pointer; outline: none; }
