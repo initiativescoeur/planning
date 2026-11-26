@@ -92,6 +92,20 @@ body, .bar, body::before { background-color: var(--page); background-image: var(
 .qflash, .qflash > td { animation: qflash 2.4s ease-out; }
 @media (max-width: 640px) { .search { max-width: none; flex-basis: 100%; } .qres .qr { grid-template-columns: minmax(0, 1fr); padding-left: 16px; } .qres .qr .qv { justify-content: flex-start; } }
 @media (prefers-reduced-motion: reduce) { .qflash, .qflash > td { animation: none; } }
+/* Modif Ulysse (25/11/2026) : maintenir Ctrl + Alt au survol d'un élément fait apparaître un bouton « Copier » ; un clic copie « Au sujet de … : » dans le presse-papier. Partout dans le planning. */
+.ask-hl { outline: 2px solid #d97757 !important; outline-offset: 2px; border-radius: 4px; }
+body.ask-on #srctip, body.ask-on #tip, body.ask-open #srctip, body.ask-open #tip { display: none !important; }
+.ask-btn { position: fixed; z-index: 1002; font: 600 13px/1 var(--f-body); display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border-radius: 999px; border: 0; background: #d97757; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.25); cursor: pointer; white-space: nowrap; }
+.ask-btn[hidden] { display: none; }
+.ask-btn::before { content: ""; width: 10px; height: 12px; border: 2px solid currentColor; border-radius: 2px; box-shadow: 3px -3px 0 -1px #d97757, 3px -3px 0 1px currentColor; margin: 3px 3px 0 0; }
+.ask-btn.ok { background: #0E1A33; }
+.ask-btn.ok::before { width: 11px; height: 6px; border-width: 0 0 2px 2px; border-radius: 0; box-shadow: none; transform: rotate(-45deg); margin: -3px 2px 0 1px; }
+.ask-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.ask-fb { position: fixed; z-index: 1003; width: min(380px, calc(100vw - 24px)); background: var(--surface); color: var(--ink); border: 1px solid var(--hair); border-radius: 10px; box-shadow: var(--shadow); padding: 10px 12px; font-size: 13px; display: grid; gap: 6px; }
+.ask-fb[hidden] { display: none; }
+.ask-fb textarea { font: 12.5px/1.4 var(--f-data); width: 100%; min-height: 70px; color: var(--ink); background: var(--page); border: 1px solid var(--hair); border-radius: 6px; padding: 6px; resize: vertical; }
+.ask-note { position: fixed; z-index: 1002; max-width: min(320px, calc(100vw - 24px)); background: #0E1A33; color: #fff; border-radius: 8px; padding: 7px 11px; font-size: 12.5px; box-shadow: 0 8px 24px rgba(0,0,0,.28); pointer-events: none; }
+.ask-note[hidden] { display: none; }
 .tabs { display: inline-flex; background: var(--surface); border: 1px solid var(--hair); border-radius: 999px; padding: 3px; gap: 2px; }
 .tabs a { text-decoration: none; color: var(--ink-2); font-weight: 600; font-size: 14px; padding: 7px 15px; border-radius: 999px; }
 .tabs a[aria-current="page"] { background: var(--ink); color: var(--surface); }
@@ -802,8 +816,8 @@ if (window.__SNAP) { document.documentElement.classList.add('snap'); const sb = 
     const late = TASKS.filter(t => t.d < TODAY && !t.done && t.k === 'd' && state.on.has(t.g));
     const soon = TASKS.filter(t => t.d >= TODAY && t.d <= lim && !t.done && state.on.has(t.g));
     $('#soon-sub').textContent = `Du ${fd(TODAY)} au ${fd(lim)} · ${soon.length} action${soon.length > 1 ? 's' : ''} à faire${late.length ? ` · ${late.length} en retard` : ''}`;
-    const rows = late.map(t => `<li><span class="d">${fd(t.d)}</span><span class="a">${tag(t.g)}<span class="late">! en retard</span><br>${esc(t.t)}</span></li>`)
-      .concat(soon.map(t => `<li><span class="d">${fd(t.d, false)}</span><span class="a">${tag(t.g)}<br>${esc(t.t)}</span></li>`));
+    const rows = late.map(t => `<li data-ask="${esc(t.id)}"><span class="d">${fd(t.d)}</span><span class="a">${tag(t.g)}<span class="late">! en retard</span><br>${esc(t.t)}</span></li>`)
+      .concat(soon.map(t => `<li data-ask="${esc(t.id)}"><span class="d">${fd(t.d, false)}</span><span class="a">${tag(t.g)}<br>${esc(t.t)}</span></li>`));
     $('#soon').innerHTML = rows.length ? rows.join('') : '<li><span class="d">—</span><span class="a">Rien à faire sur cette période pour les dossiers affichés.</span></li>';
   }
 
@@ -941,7 +955,7 @@ if (window.__SNAP) { document.documentElement.classList.add('snap'); const sb = 
   }
   function whoLine(t) { return t.by != null && t.at ? `<span class="who">Modifié par ${esc(nameOf(t.by))} · ${esc(fdt(t.at))}</span>` : ''; }
   function taskLi(t) {
-    return `<li><span class="d">${fd(t.d)}${t.r ? `<small>${esc(jx(t.d, t.r))}</small>` : ''}</span><span class="a"><b>${t.done ? '✓ ' : ''}${esc(t.t)}</b>${t.k === 'e' ? '<span class="rdv">rendez-vous</span>' : ''}${fiBadge(t)}${canEdit() ? `<button type="button" class="linkbtn" data-edit="${esc(t.id)}">Modifier</button>` : ''}${t.x ? `<p>${esc(t.x)}</p>` : ''}${whoLine(t)}</span></li>`;
+    return `<li data-ask="${esc(t.id)}"><span class="d">${fd(t.d)}${t.r ? `<small>${esc(jx(t.d, t.r))}</small>` : ''}</span><span class="a"><b>${t.done ? '✓ ' : ''}${esc(t.t)}</b>${t.k === 'e' ? '<span class="rdv">rendez-vous</span>' : ''}${fiBadge(t)}${canEdit() ? `<button type="button" class="linkbtn" data-edit="${esc(t.id)}">Modifier</button>` : ''}${t.x ? `<p>${esc(t.x)}</p>` : ''}${whoLine(t)}</span></li>`;
   }
   function renderGDetail(c) {
     const el = $('#g-detail');
@@ -1379,13 +1393,14 @@ if (window.__SNAP) { document.documentElement.classList.add('snap'); const sb = 
   });
 
   /* ---------- vue d'ensemble ---------- */
+  const FRAME_ASK = "<script>/* Modif Ulysse (25/11/2026) : dans la vue d'ensemble, Ctrl + Alt au survol fait appara\u00eetre un bouton \u00ab Copier \u00bb ; le planning copie le texte. */\n(function(){var x=-1,y=-1,held=false,cur=null,idle=null;var st=document.createElement('style');st.textContent='.ask-hl{outline:2px solid #d97757!important;outline-offset:2px;border-radius:4px}.ask-btn{position:fixed;z-index:99999;font:600 13px/1 system-ui,-apple-system,sans-serif;padding:7px 11px;border-radius:999px;border:0;background:#d97757;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;white-space:nowrap}.ask-btn.ok{background:#0E1A33}.ask-btn[hidden]{display:none}';document.head.appendChild(st);\nvar b=document.createElement('button');b.type='button';b.className='ask-btn';b.hidden=true;b.textContent='Copier';document.body.appendChild(b);\nfunction blk(){var el=document.elementFromPoint(x,y);if(!el||el===b)return null;return el.closest('li,tr,h1,h2,h3,h4,h5,p,dt,dd,figcaption,td,th,article,section,div')}\nfunction head(el){var s=el.closest('section,article');var h=s&&s.querySelector('h1,h2,h3,h4');return h&&h!==el?h.innerText:''}\nfunction place(){if(!cur)return;var r=cur.getBoundingClientRect(),w=b.offsetWidth,h=b.offsetHeight;var bx=r.width>360?r.right-w-8:Math.min(r.right-w-6,x+12),by=r.top+Math.min(6,Math.max(0,(r.height-h)/2));if(r.height>120)by=Math.min(Math.max(r.top+6,y-h-10),r.bottom-h-6);bx=Math.max(8,Math.min(Math.max(bx,r.left+6),innerWidth-w-8));by=Math.max(8,Math.min(by,innerHeight-h-8));b.style.left=bx+'px';b.style.top=by+'px'}\nfunction show(el){if(cur&&cur!==el)cur.classList.remove('ask-hl');cur=el;el.classList.add('ask-hl');b.classList.remove('ok');b.textContent='Copier';b.hidden=false;place()}\nfunction hide(){if(cur)cur.classList.remove('ask-hl');cur=null;b.hidden=true;clearTimeout(idle)}\nfunction arm(ms){clearTimeout(idle);idle=setTimeout(function(){if(!held&&!b.matches(':hover'))hide()},ms||6000)}\nfunction update(){if(!held)return;var el=blk();if(el&&el!==cur)show(el)}\nfunction act(e){e.preventDefault();e.stopPropagation();if(!cur)return;var s=(cur.innerText||'').replace(/\\s+/g,' ').trim();if(!s)return;parent.postMessage({type:'ic-ask',s:s.slice(0,400),h:head(cur),x:x,y:y},'*')}\nb.addEventListener('pointerdown',function(e){if(e.button===0||e.button===2)act(e)});b.addEventListener('contextmenu',function(e){e.preventDefault()});b.addEventListener('click',function(e){e.preventDefault();if(e.detail===0)act(e)});\naddEventListener('message',function(e){if(e.source===parent&&e.data&&e.data.type==='ic-ask-done'){if(e.data.ok){b.classList.add('ok');b.textContent='Copi\u00e9';arm(held?0:2500)}else hide()}});\naddEventListener('pointermove',function(e){x=e.clientX;y=e.clientY;if(held)update()},{passive:true});\naddEventListener('keydown',function(e){if(e.key==='Escape'){hide();return}if(e.ctrlKey&&e.altKey&&!held&&(e.key==='Control'||e.key==='Alt')){held=true;clearTimeout(idle);update()}});\naddEventListener('keyup',function(e){if(held&&!(e.ctrlKey&&e.altKey)){held=false;if(cur)arm()}});\naddEventListener('blur',function(){held=false});\ndocument.addEventListener('contextmenu',function(e){if(e.ctrlKey&&e.altKey)e.preventDefault()},true);\ndocument.addEventListener('pointerdown',function(e){if(e.target===b)return;if(!held&&cur)hide()});\naddEventListener('scroll',function(){if(cur&&!held)hide()},{passive:true,capture:true});})();\n<\/script>\n";
   let overviewLoaded = false;
   async function loadOverview() {
     if (overviewLoaded) return;
     try {
       const r = await api('overview');
       const fr = $('#ens-frame');
-      fr.srcdoc = '<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><base target="_blank"><style>body{margin:0}</style></head><body>' + r.html + '</body></html>';
+      fr.srcdoc = '<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><base target="_blank"><style>body{margin:0}</style></head><body>' + r.html + FRAME_ASK + '</body></html>';
       fr.hidden = false; $('#ens-msg').hidden = true; overviewLoaded = true;
     } catch (e) { $('#ens-msg').textContent = e.error || 'La vue d’ensemble n’a pas pu être chargée.'; }
   }
@@ -1502,6 +1517,92 @@ if (window.__SNAP) { document.documentElement.classList.add('snap'); const sb = 
       go(h, b ? b.dataset.go : (h.kind === 't' ? 'liste' : 'pert'));
     });
     document.addEventListener('pointerdown', e => { if (!e.target.closest('#search')) qr.hidden = true; });
+  })();
+
+  /* ---------- bouton « Copier » au survol avec Ctrl + Alt (Modif Ulysse, 24 et 25/11/2026) ----------
+     Partout dans le planning : maintenir Ctrl + Alt au survol d'un élément fait apparaître un bouton « Copier » sur cet élément.
+     Un clic copie « Au sujet de … : » dans le presse-papier. On peut enchaîner : survoler un autre élément, recliquer.
+     Le bouton reste quelques secondes après avoir relâché les touches. Si la copie est refusée, le texte s'affiche sélectionné pour ⌘C. */
+  (function () {
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'ask-btn'; btn.hidden = true; btn.textContent = 'Copier'; document.body.appendChild(btn);
+    const note = document.createElement('div'); note.className = 'ask-note'; note.hidden = true; note.setAttribute('role', 'status'); document.body.appendChild(note);
+    const fb = document.createElement('div'); fb.className = 'ask-fb'; fb.hidden = true; document.body.appendChild(fb);
+    let px = -1, py = -1, held = false, cur = null, idle = null, nt = null;
+    const gname = g => (GI[g] || { n: g }).n;
+    const range = (a, b) => a === b ? fd(a) : `du ${fd(a)} au ${fd(b)}`;
+    const clip = (s, m) => { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > m ? s.slice(0, m - 1).trim() + '…' : s; };
+    const VUE = { planning: 'vue Planning', pert: 'vue PERT', liste: 'liste des actions', journal: 'journal des modifications', ensemble: 'vue d’ensemble', comptes: 'comptes', compte: 'mon compte' };
+    const where = el => el.closest('.soon') ? 'échéances des trois prochaines semaines' : el.closest('.bar') ? 'barre de navigation' : (VUE[state.view] || 'planning');
+    function taskText(t, extra) { return `Au sujet de « ${t.t} » (${gname(t.g)}, ${fd(t.d)}${t.k === 'e' ? ', rendez-vous' : ''}${t.done ? ', fait' : ''}${extra ? ', ' + extra : ''} ; planning Initiatives-Cœur, réf. ${t.id}) : `; }
+    function itemAt(x, y) {
+      const el = document.elementFromPoint(x, y); if (!el || el.id === 'ens-frame' || el.closest('.ask-fb, .ask-btn, .ask-note')) return null;
+      const tr = el.closest('#tbl tr[data-id]'); if (tr && BYID[tr.dataset.id]) return { el: tr, label: tr.querySelector('td.a b, td.a') ? BYID[tr.dataset.id].t : '', text: taskText(BYID[tr.dataset.id]) };
+      const li = el.closest('[data-ask]'); if (li && BYID[li.dataset.ask]) { const t = BYID[li.dataset.ask]; return { el: li, label: t.t, text: taskText(t, li.closest('.soon') ? 'dans les échéances proches' : '') }; }
+      const h = el.closest('#g-scroll .hit');
+      if (h && h.dataset.c != null && clusters[+h.dataset.c]) { const c = clusters[+h.dataset.c], k = c.items.length, a = c.items[0].d, b = c.items[k - 1].d; if (k === 1) return { el: h, label: c.items[0].t, text: taskText(c.items[0], 'vue Planning') }; const ts = c.items.slice(0, 6).map(t => `${t.t} [${t.id}]`).join(' ; ') + (k > 6 ? ` ; + ${k - 6} autres` : ''); return { el: h, label: `${k} actions · ${gname(c.g)}`, text: `Au sujet des actions « ${gname(c.g)} » ${range(a, b)} (${ts} ; vue Planning) : ` }; }
+      if (h && h.dataset.p != null && PERIODS[+h.dataset.p]) { const p = PERIODS[+h.dataset.p]; return { el: h, label: p.l, text: `Au sujet de la période « ${p.l} » (${gname(p.g)}, ${range(p.a, p.b)} ; vue Planning) : ` }; }
+      const nd = el.closest('#p-scroll .node');
+      if (nd && NI[nd.dataset.n]) { const v = NI[nd.dataset.n]; if (v.t && BYID[v.t]) return { el: nd, label: BYID[v.t].t, text: taskText(BYID[v.t], 'vue PERT') }; const d = v.cd || v.d; return { el: nd, label: v.l, text: `Au sujet de l'étape du PERT « ${v.l} » (${gname(v.g)}${d ? ', ' + fd(d) : ''} ; planning Initiatives-Cœur) : ` }; }
+      const chip = el.closest('#chips .chip[data-k]'); if (chip && GI[chip.dataset.k]) return { el: chip, label: gname(chip.dataset.k), text: `Au sujet du dossier « ${gname(chip.dataset.k)} » (planning Initiatives-Cœur) : ` };
+      const blk = el.closest('li, tr, h1, h2, h3, h4, p, dt, dd, figcaption, td, th, label, .row, .card, article, .panel');
+      if (blk && !blk.closest('script, style')) { const s = clip(blk.innerText, 220); if (s) return { el: blk, label: s, text: `Au sujet de « ${s} » (${where(blk)} ; planning Initiatives-Cœur) : ` }; }
+      return null;
+    }
+    function say(html, x, y, ms) { note.innerHTML = html; note.hidden = false; const w = note.offsetWidth; note.style.left = Math.max(8, Math.min(x + 14, innerWidth - w - 8)) + 'px'; note.style.top = Math.max(8, Math.min(y + 18, innerHeight - note.offsetHeight - 8)) + 'px'; clearTimeout(nt); nt = setTimeout(() => { note.hidden = true; }, ms || 2200); }
+    function placeBtn() {
+      if (!cur) return;
+      const r = cur.el.getBoundingClientRect(), w = btn.offsetWidth, h = btn.offsetHeight;
+      let x = r.width > 360 ? r.right - w - 8 : Math.min(r.right - w - 6, px + 12), y = r.top + Math.min(6, Math.max(0, (r.height - h) / 2));
+      if (r.height > 120) y = Math.min(Math.max(r.top + 6, py - h - 10), r.bottom - h - 6);
+      x = Math.max(8, Math.min(Math.max(x, r.left + 6), innerWidth - w - 8)); y = Math.max(8, Math.min(y, innerHeight - h - 8));
+      btn.style.left = x + 'px'; btn.style.top = y + 'px';
+    }
+    function show(it) {
+      if (cur && cur.el !== it.el) cur.el.classList.remove('ask-hl');
+      cur = it; it.el.classList.add('ask-hl');
+      btn.classList.remove('ok'); btn.textContent = 'Copier'; btn.title = it.text; btn.hidden = false; document.body.classList.add('ask-open'); placeBtn();
+    }
+    function hide() { if (cur) cur.el.classList.remove('ask-hl'); cur = null; btn.hidden = true; clearTimeout(idle); document.body.classList.remove('ask-open'); }
+    function arm(ms) { clearTimeout(idle); idle = setTimeout(() => { if (!held && !btn.matches(':hover')) hide(); }, ms || 6000); }
+    function legacyCopy(text) { const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:-1000px;opacity:0'; document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) { } ta.remove(); return ok; }
+    function fallback(text, x, y) {
+      fb.innerHTML = `<b>Copie automatique refusée par l’appli</b><span>Le texte est sélectionné : ⌘C pour le copier, Échap pour fermer.</span><textarea readonly>${esc(text)}</textarea>`;
+      fb.hidden = false; fb.style.left = Math.max(8, Math.min(x + 14, innerWidth - fb.offsetWidth - 8)) + 'px'; fb.style.top = Math.max(8, Math.min(y + 18, innerHeight - fb.offsetHeight - 8)) + 'px';
+      const ta = fb.querySelector('textarea'); ta.focus(); ta.select();
+    }
+    async function copyText(text) { try { await navigator.clipboard.writeText(text); return true; } catch (e) { return legacyCopy(text); } }
+    async function act(e) {
+      e.preventDefault(); e.stopPropagation(); if (!cur) return;
+      const it = cur;
+      if (await copyText(it.text)) { btn.classList.add('ok'); btn.textContent = 'Copié'; arm(held ? 0 : 2500); }
+      else fallback(it.text, px, py);
+    }
+    /* Sur Mac, Ctrl + clic ouvre le menu contextuel au lieu d'un clic : on réagit à l'appui du bouton de la souris. */
+    btn.addEventListener('pointerdown', e => { if (e.button === 0 || e.button === 2) act(e); });
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+    btn.addEventListener('click', e => { e.preventDefault(); if (e.detail === 0) act(e); });
+    btn.addEventListener('pointerleave', () => { if (!held) arm(); });
+    function update() { if (!held) return; const el = document.elementFromPoint(px, py); if (el && el.closest('.ask-btn')) return; if (el && el.id === 'ens-frame') { say('Vue d’ensemble : clique une fois dedans, puis refais Ctrl + Alt.', px, py); return; } const it = itemAt(px, py); if (it && (!cur || it.el !== cur.el)) show(it); else if (cur) placeBtn(); }
+    addEventListener('pointermove', e => { px = e.clientX; py = e.clientY; if (held) update(); }, { passive: true });
+    addEventListener('keydown', e => {
+      if (e.key === 'Escape') { if (!fb.hidden) fb.hidden = true; hide(); return; }
+      if (e.ctrlKey && e.altKey && !held && (e.key === 'Control' || e.key === 'Alt')) { held = true; document.body.classList.add('ask-on'); clearTimeout(idle); update(); }
+    });
+    addEventListener('keyup', e => { if (held && !(e.ctrlKey && e.altKey)) { held = false; document.body.classList.remove('ask-on'); if (cur) arm(); } });
+    addEventListener('blur', () => { held = false; document.body.classList.remove('ask-on'); });
+    document.addEventListener('contextmenu', e => { if (e.ctrlKey && e.altKey) e.preventDefault(); }, true);
+    document.addEventListener('pointerdown', e => { if (e.target.closest('.ask-btn')) return; if (!fb.hidden && !e.target.closest('.ask-fb')) fb.hidden = true; if (!held && cur) hide(); });
+    addEventListener('scroll', () => { if (cur && !held) hide(); else placeBtn(); }, { passive: true, capture: true });
+    /* La vue d'ensemble est dans un cadre isolé : son propre bouton envoie le texte ici, qui le copie. */
+    addEventListener('message', async e => {
+      const fr = $('#ens-frame'); if (!fr || e.source !== fr.contentWindow || !e.data || e.data.type !== 'ic-ask') return;
+      const s = clip(e.data.s, 220); if (!s) return;
+      const r = fr.getBoundingClientRect(), x = r.left + (+e.data.x || 0), y = r.top + (+e.data.y || 0);
+      const text = `Au sujet de « ${s} » (vue d’ensemble${e.data.h ? ', ' + clip(e.data.h, 80) : ''} ; planning Initiatives-Cœur) : `;
+      const ok = await copyText(text);
+      try { e.source.postMessage({ type: 'ic-ask-done', ok }, '*'); } catch (err) { }
+      if (!ok) fallback(text, x, y);
+    });
   })();
 
   boot();
